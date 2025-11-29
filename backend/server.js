@@ -1,83 +1,90 @@
-// server.js
 import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
 import dotenv from "dotenv";
-import { createServer } from "http";
+import cors from "cors";
+import http from "http";
 import { Server } from "socket.io";
-import nodemailer from "nodemailer";
 
-// Routes
-import activitiesRoutes from "./routes/activities.js";
-import tasksRoutes from "./routes/tasks.js";
-import teamsRoutes from "./routes/teams.js";
-import authRoutes from "./routes/auth.js";
-import ideaGenerationRoutes from "./routes/ideaGeneration.js";
+import { connectDB } from "./config/db.js";
+
+// ROUTES
+import authRoutes from "./routes/authRoutes.js";
+import managerRoutes from "./routes/managerRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+
+// MODELS
+import Message from "../models/Message.js";   // 🔥 required for chat handling
 
 dotenv.config();
 
+// APP + SOCKET SERVER
 const app = express();
-app.use(cors());
-app.use(express.json());
+connectDB();
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/activities", activitiesRoutes);
-app.use("/api/tasks", tasksRoutes);
-app.use("/api/teams", teamsRoutes);
-app.use("/api/idea", ideaGenerationRoutes); // ✅ Idea Generation route
-
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
-
-// Server + Socket.io
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: { origin: "http://localhost:3000" },
-});
-
-io.on("connection", (socket) => {
-  console.log("⚡ User connected");
-  socket.on("disconnect", () => {
-    console.log("❌ User disconnected");
-  });
-});
-
-// Make io available in routes
-app.set("io", io);
-
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
-// Email sending utility
-export const sendEmail = async ({ to, subject, text }) => {
-  try {
-    await transporter.sendMail({
-      from: `"Project Management App" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text,
-    });
-    console.log(`📧 Email sent to ${to}`);
-  } catch (err) {
-    console.error("❌ Email sending failed:", err);
-  }
-};
+// Make io available everywhere
+app.set("io", io);
 
-// Start server
+// MIDDLEWARE
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(express.json());
+
+// REST APIs
+app.use("/api/auth", authRoutes);
+app.use("/api/manager", managerRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/chat", chatRoutes);
+
+app.get("/", (req, res) => {
+  res.send({
+    status: "Server Running 🚀",
+    message: "AI Ideation & Project Management Backend with Live Realtime",
+  });
+});
+
+
+// 📡 SOCKET.IO CONNECTION
+io.on("connection", (socket) => {
+  console.log("🟢 User Connected:", socket.id);
+
+  // Joined a TEAM ROOM
+  socket.on("joinTeam", (teamId) => {
+    socket.join(String(teamId));
+    console.log(`📌 ${socket.id} joined room → ${teamId}`);
+  });
+
+  // Real-time CHAT
+  socket.on("chatMessage", async ({ teamId, sender, text }) => {
+    try {
+      const msg = await Message.create({ teamId, sender, text });
+      io.to(String(teamId)).emit("chatMessage", msg);
+      console.log("💬 Message Sent:", msg.text);
+    } catch (err) {
+      console.error("Chat save error:", err.message);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+  });
+});
+
+
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+server.listen(PORT, () =>
+  console.log(`🚀 Backend Running on http://localhost:${PORT}`)
 );

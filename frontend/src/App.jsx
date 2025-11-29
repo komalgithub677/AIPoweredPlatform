@@ -1,32 +1,34 @@
 // src/App.jsx
 import React, { useEffect, useRef } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // ⬅ BrowserRouter removed
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { TeamProvider } from "./context/TeamContext";
+
 import SignupPage from "./components/SignupPage";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import Teams from "./components/Teams";
-import IdeaGeneration from "./components/IdeaGeneration"; // ✅ Import IdeaGeneration component
+import IdeaGeneration from "./components/IdeaGeneration";
 
-// Protected Route
+
+// ------------------ ROUTE GUARDS ------------------
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;
 };
 
-// Public Route
 const PublicRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
-// 404 Page
+
+// ------------------ 404 PAGE ------------------
 const NotFound = () => (
   <div className="flex items-center justify-center min-h-screen text-center">
     <div>
       <h1 className="text-4xl font-bold text-gray-600 mb-4">404 - Page Not Found</h1>
-      <p className="text-gray-500 mb-4">The page you're looking for doesn't exist.</p>
+      <p className="text-gray-500 mb-4">The page you are looking for does not exist.</p>
       <a href="/" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         Go Home
       </a>
@@ -34,11 +36,12 @@ const NotFound = () => (
   </div>
 );
 
+
+// ------------------ APP CONTENT ROUTING ------------------
 function AppContent() {
   const { user, setAuthData } = useAuth();
   const teamsRef = useRef(null);
 
-  // Auto-login dummy user
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
@@ -47,66 +50,24 @@ function AppContent() {
     }
   }, [user, setAuthData]);
 
-  // Scroll to task callback
   const handleScrollToTask = (taskId) => {
-    if (teamsRef.current) {
-      teamsRef.current.scrollToTask(taskId);
-    }
+    if (teamsRef.current) teamsRef.current.scrollToTask(taskId);
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
+
       <Routes>
-        {/* Root redirect */}
-        <Route
-          path="/"
-          element={user ? <Navigate to="/dashboard" /> : <Navigate to="/signup" />}
-        />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/signup" />} />
 
-        {/* Public routes */}
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <SignupPage />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
+        {/* Public Pages */}
+        <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage onScrollToTask={handleScrollToTask} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teams"
-          element={
-            <ProtectedRoute>
-              <Teams ref={teamsRef} />
-            </ProtectedRoute>
-          }
-        />
-        {/* ✅ Idea Generation Route */}
-        <Route
-          path="/idea"
-          element={
-            <ProtectedRoute>
-              <IdeaGeneration />
-            </ProtectedRoute>
-          }
-        />
+        {/* Protected Dashboard Pages */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage onScrollToTask={handleScrollToTask} /></ProtectedRoute>} />
+        <Route path="/teams" element={<ProtectedRoute><Teams ref={teamsRef} /></ProtectedRoute>} />
+        <Route path="/idea" element={<ProtectedRoute><IdeaGeneration /></ProtectedRoute>} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
@@ -115,7 +76,9 @@ function AppContent() {
   );
 }
 
-function App() {
+
+// ------------------ EXPORT APP (NO BROWSER ROUTER here) ------------------
+export default function App() {
   return (
     <AuthProvider>
       <TeamProvider>
@@ -124,5 +87,3 @@ function App() {
     </AuthProvider>
   );
 }
-
-export default App;

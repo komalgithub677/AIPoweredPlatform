@@ -1,6 +1,8 @@
+// src/components/SignupPage.jsx
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";   // ✅ FIXED PATH
 import axios from "axios";
 
 export default function SignupPage() {
@@ -41,26 +43,21 @@ export default function SignupPage() {
     }
   };
 
-  const handleInputChange = () => {
-    if (error) setError("");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="relative z-10 bg-[#0A2540] rounded-3xl shadow-2xl w-full max-w-md p-8">
-        {/* Project Title */}
-        <div className="mb-4 text-center">
-          <h1 className="text-xl font-bold text-white">
-            AI-Powered Ideation & Project Management Platform
-          </h1>
-        </div>
 
-        <div className="mb-6 text-center">
-          <h2 className="text-3xl font-extrabold text-white">Create Account</h2>
-          <p className="text-white/80 text-sm mt-1">Join us and start your journey 🚀</p>
-        </div>
+        <h1 className="text-xl font-bold text-white text-center mb-4">
+          AI-Powered Ideation & Project Management Platform
+        </h1>
 
-        {/* Error Message */}
+        <h2 className="text-3xl font-extrabold text-center text-white mb-1">
+          Create Account
+        </h2>
+        <p className="text-white/80 text-sm text-center mb-6">
+          Join the collaborative workspace 🚀
+        </p>
+
         {error && (
           <div className="mb-4 p-3 bg-red-500/20 border border-red-400/50 text-red-200 text-sm rounded-lg">
             {error}
@@ -68,39 +65,31 @@ export default function SignupPage() {
         )}
 
         <form className="space-y-5" onSubmit={handleSignup}>
-          {/* Name */}
+
           <div>
             <label className="block text-sm font-medium text-white mb-1">Name</label>
             <input
               type="text"
               placeholder="Enter your name"
               value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                handleInputChange();
-              }}
+              onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
               required
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-white mb-1">Email</label>
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                handleInputChange();
-              }}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
               required
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-white mb-1">Password</label>
             <div className="relative">
@@ -108,10 +97,7 @@ export default function SignupPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  handleInputChange();
-                }}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
                 required
                 minLength={6}
@@ -126,7 +112,6 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -138,13 +123,13 @@ export default function SignupPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="text-center text-white/90 text-sm mt-6">
           Already have an account?{" "}
           <Link to="/login" className="text-yellow-300 hover:underline">
-            Log in
+            Login
           </Link>
         </p>
+
       </div>
     </div>
   );
