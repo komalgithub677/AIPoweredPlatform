@@ -19,3 +19,4 @@ npm start
 ```
 
 By default, frontend runs on port 3000 and backend on 5000.
+"# AIPoweredPlatform" 
